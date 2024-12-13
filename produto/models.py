@@ -1,3 +1,86 @@
 from django.db import models
 
-# Create your models here.
+from PIL import Image
+import os
+from django.conf import settings
+
+class Produto(models.Model):
+
+    class Meta:
+        verbose_name = 'Produto'
+        verbose_name_plural = 'Produtos'
+
+    nome: models.CharField = models.CharField(max_length=255)
+    descricao_curta: models.TextField = models.TextField()
+    descricao_longa: models.TextField = models.TextField()
+    imagem: models.ImageField = models.ImageField(
+        upload_to='produto_imagens/%Y/%m',
+        blank=True,
+        null=True,
+    )
+    slug: models.SlugField = models.SlugField(unique=True)
+    preco_marketing: models.FloatField = models.FloatField(default=0)
+    preco_marketing_promocional: models.FloatField = models.FloatField(default=0)
+    tipo: models.CharField = models.CharField(
+        default='V',
+        max_length=1,
+        choices=(
+            ('V', 'Variation'),
+            ('S', 'Simple')
+        )
+    )
+
+    @staticmethod
+    def resize_image(imagem, new_width=800):
+        print(f'Nome da imagem: {imagem.name}')
+        img_full_path = os.path.join(settings.MEDIA_ROOT, imagem.name)
+        print(f'Nome do caminho completo: {img_full_path}')
+
+        imagem_pillow = Image.open(img_full_path)
+        original_width, original_height = imagem_pillow.size
+
+        print(f'Tamanho original - L: {original_width} - H: {original_height}')
+
+        if original_width < new_width:
+            print('Retornado. Largura original é menor que a largura desejada.')
+            imagem_pillow.close()
+            return
+
+        new_height = round((new_width * original_height) / original_width)
+        new_image = imagem_pillow.resize((new_width, new_height), Image.LANCZOS)
+
+        new_image.save(
+            img_full_path,
+            optimize=True,
+            quality=100,
+        )
+
+        print('Imagem redimensionada')
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        
+        max_image_size = 800
+
+        if self.imagem:
+            self.resize_image(self.imagem, max_image_size)
+
+    def __str__(self):
+        return self.nome
+
+
+class Variacao(models.Model):
+
+    class Meta:
+        verbose_name = 'Variação'
+        verbose_name_plural = 'Variações'
+
+    produto: models.ForeignKey = models.ForeignKey(Produto, on_delete=models.CASCADE)
+    nome: models.CharField = models.CharField(max_length=50, blank=True, null=True)
+    preco: models.FloatField = models.FloatField()
+    preco_promocional:models.FloatField = models.FloatField(default=0)
+    estoque: models.PositiveIntegerField = models.PositiveIntegerField(default=1)
+
+    def __str__(self):
+        return self.nome or self.produto
+
