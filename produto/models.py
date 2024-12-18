@@ -3,6 +3,8 @@ from django.db import models
 from PIL import Image
 import os
 from django.conf import settings
+from utils.slug_new import slugify_new
+from utils import utils
 
 class Produto(models.Model):
 
@@ -18,9 +20,9 @@ class Produto(models.Model):
         blank=True,
         null=True,
     )
-    slug: models.SlugField = models.SlugField(unique=True)
-    preco_marketing: models.FloatField = models.FloatField(default=0)
-    preco_marketing_promocional: models.FloatField = models.FloatField(default=0)
+    slug: models.SlugField = models.SlugField(unique=True, blank=True, null=True)
+    preco_marketing: models.FloatField = models.FloatField(default=0, verbose_name='Preço')
+    preco_marketing_promocional: models.FloatField = models.FloatField(default=0, verbose_name='Preço Promo')
     tipo: models.CharField = models.CharField(
         default='V',
         max_length=1,
@@ -30,19 +32,23 @@ class Produto(models.Model):
         )
     )
 
+    def get_preco_formatado(self):
+        print('get_preco_formatado')
+        # return f'R$ {self.preco_marketing:.2f}'.replace('.', ',')
+        return utils.formata_preco(self.preco_marketing)
+
+    def get_preco_marketing_formatado(self):
+        # return f'R$ {self.preco_marketing_promocional:.2f}'.replace('.', ',')
+        return utils.formata_preco(self.preco_marketing_promocional)
+
     @staticmethod
     def resize_image(imagem, new_width=800):
-        print(f'Nome da imagem: {imagem.name}')
         img_full_path = os.path.join(settings.MEDIA_ROOT, imagem.name)
-        print(f'Nome do caminho completo: {img_full_path}')
 
         imagem_pillow = Image.open(img_full_path)
         original_width, original_height = imagem_pillow.size
 
-        print(f'Tamanho original - L: {original_width} - H: {original_height}')
-
         if original_width < new_width:
-            print('Retornado. Largura original é menor que a largura desejada.')
             imagem_pillow.close()
             return
 
@@ -55,9 +61,10 @@ class Produto(models.Model):
             quality=100,
         )
 
-        print('Imagem redimensionada')
-
     def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify_new(self.nome)
+
         super().save(*args, **kwargs)
         
         max_image_size = 800
@@ -77,10 +84,16 @@ class Variacao(models.Model):
 
     produto: models.ForeignKey = models.ForeignKey(Produto, on_delete=models.CASCADE)
     nome: models.CharField = models.CharField(max_length=50, blank=True, null=True)
-    preco: models.FloatField = models.FloatField()
-    preco_promocional:models.FloatField = models.FloatField(default=0)
+    preco: models.FloatField = models.FloatField(verbose_name='Preço')
+    preco_promocional:models.FloatField = models.FloatField(default=0, verbose_name='Preço Promo')
     estoque: models.PositiveIntegerField = models.PositiveIntegerField(default=1)
 
+    def get_preco_formatado(self):
+        return utils.formata_preco(self.preco)
+
+    def get_preco_promocional_formatado(self):
+        return utils.formata_preco(self.preco_promocional)
+    
     def __str__(self):
         return self.nome or self.produto
 

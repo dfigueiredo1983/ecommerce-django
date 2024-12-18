@@ -21,8 +21,14 @@ from django.conf.urls.static import static
 from django.urls.resolvers import URLPattern, URLResolver
 from typing import List, Union
 
+
 urlpatterns: List[Union[URLResolver, URLPattern]] = [
     path('admin/', admin.site.urls),
+    # Meus endpoints
+    path('', include('produto.urls')),
+    path('perfil/', include('perfil.urls')),
+    path('pedido/', include('pedido.urls')),
+
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 # TODO: Remover debug toolbar
