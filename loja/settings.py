@@ -152,7 +152,8 @@ MESSAGE_TAGS = {
 }
 
 # Sessão em dias: 60s * 60m * 24h * 1d
-SESSION_COOKIE_AGE = 60 * 60 * 24 * 7
+# SESSION_COOKIE_AGE = 60 * 60 * 24 * 7 # 7 dias
+SESSION_COOKIE_AGE = 60 * 60 # 1 hora
 
 # Salvar a cada requisição
 SESSION_SAVE_EVERY_REQUEST = False
