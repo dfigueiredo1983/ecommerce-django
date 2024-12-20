@@ -170,6 +170,6 @@ class RemoveFromCartView(View):
 
         return redirect(http_referer)
 
-class FinishView(View):
+class PurchaseSummaryView(View):
     def get(self, *args, **kwargs):
         return HttpResponse('Método finalizar produto do app Produto')

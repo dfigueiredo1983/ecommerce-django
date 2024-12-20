@@ -7,7 +7,7 @@ class PayOrderView(View):
     def get(self, *args, **kwargs):
         return HttpResponse('Método pagar pedido do app Pedido')
 
-class CloseOrderView(View):
+class SaveOrderView(View):
     def get(self, *args, **kwargs):
         return HttpResponse('Método fechar pedido do app Pedido')
 
