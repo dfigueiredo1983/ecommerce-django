@@ -8,6 +8,12 @@ class PerfilForm(forms.ModelForm):
         fields = '__all__'
         exclude = ('usuario',)
 
+    data_nascimento = forms.DateField(
+        input_formats=['%d/%m/%Y', '%Y-%m-%d'],
+        widget=forms.DateInput(attrs={'placeholder': 'DD/MM/YYYY'})
+    )
+
+
 class UserForm(forms.ModelForm):
     password = forms.CharField(
         required=False,
@@ -32,7 +38,8 @@ class UserForm(forms.ModelForm):
                     'password', 'password2', 'email')
 
     def clean(self, *args, **kwargs):
-        data = self.data
+        self.cleaned_data = super().clean()
+
         cleaned = self.cleaned_data
         validation_error_msgs = {}
 
@@ -42,18 +49,20 @@ class UserForm(forms.ModelForm):
         email_data = cleaned.get('email')
 
         usuario_db = User.objects.filter(username=usuario_data).first()
-        # email_db = User.objects.filter(email=email_data).first()
+        email_db = User.objects.filter(email=email_data).first()
 
         error_msg_user_exists = 'Usuário já cadastrado'
         error_msg_email_exists = 'Email já cadastrado'
         error_msg_password_match = 'As senhas devem ser iguais'
         error_msg_password_short = 'Sua senha deve ter pelo menos 6 caracteres'
+        error_msg_required_field = 'campo obrigatório'
 
-        print('User: ', usuario_data)
-        print('User db: ', type(usuario_db))
-        print('User logado: ', self.usuario.username)
+        # print('User: ', usuario_data)
+        # print('User db: ', type(usuario_db))
+        # print('User logado: ', self.usuario)
 
         if self.usuario: # usuário logado - atualização
+            # print('LOGADO')
             if usuario_db is None:
                 validation_error_msgs['username'] = 'Não pode alterar o nome de usuário'
                 raise(forms.ValidationError(validation_error_msgs))
@@ -77,7 +86,29 @@ class UserForm(forms.ModelForm):
 
 
         else: # usuário não logado - cadastro
-            ...
+            # print('NÃO LOGADO')
+            if usuario_db == None: # usuário ainda não existe no sistema
+                if password_data:
+                    if password_data != password2_data:
+                        validation_error_msgs['password'] = error_msg_password_match
+                        validation_error_msgs['password2'] = error_msg_password_match
+
+                    if len(password_data) < 6:
+                        validation_error_msgs['password'] = error_msg_password_short
+                        validation_error_msgs['password2'] = error_msg_password_short
+                else:
+                    validation_error_msgs['password'] = error_msg_required_field
+
+
+                if not email_data:
+                    validation_error_msgs['email'] = error_msg_required_field
+                    
+                if email_db is not None:
+                    validation_error_msgs['email'] = error_msg_email_exists
+
+            else:
+                validation_error_msgs['username'] = error_msg_user_exists
 
         if validation_error_msgs:
+            # print('Validation: ', validation_error_msgs)
             raise(forms.ValidationError(validation_error_msgs))

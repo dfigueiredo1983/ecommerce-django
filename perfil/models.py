@@ -12,7 +12,7 @@ class Perfil(models.Model):
 
     usuario: models.OneToOneField = models.OneToOneField(User, on_delete=models.CASCADE, verbose_name='usuário')
     idade: models.PositiveIntegerField = models.PositiveIntegerField()
-    data_nascimento: models.DateField = models.DateField()
+    data_nascimento: models.DateField = models.DateField(blank=True, null=True)
     cpf: models.CharField = models.CharField(max_length=11, verbose_name='CPF')
     endereco: models.CharField = models.CharField(max_length=150)
     numero: models.CharField = models.CharField(max_length=20)
@@ -59,7 +59,7 @@ class Perfil(models.Model):
     
     def clean(self):
         error_messages = {}
-        print('Valida CPF', valida_cpf(self.cpf))
+        # print('Valida CPF', valida_cpf(self.cpf))
         if not valida_cpf(self.cpf):
             error_messages['cpf'] = 'Digite um CPF válido.'
 
