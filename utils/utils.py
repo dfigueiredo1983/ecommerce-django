@@ -20,8 +20,14 @@ def cart_total_valor(carrinho):
     #      in carrinho.values()])
     # )
 
-    return f'R$ {sum([item.get('preco_unitario_promocional') 
+    return sum([item.get('preco_unitario_promocional') 
          if item.get('preco_unitario_promocional') 
          else item.get('preco_unitario') 
          for item 
-         in carrinho.values()])}'
+         in carrinho.values()])
+
+    # return f'R$ {sum([item.get('preco_unitario_promocional') 
+    #      if item.get('preco_unitario_promocional') 
+    #      else item.get('preco_unitario') 
+    #      for item 
+    #      in carrinho.values()])}'

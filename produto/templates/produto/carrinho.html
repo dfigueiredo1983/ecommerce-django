@@ -12,102 +12,6 @@
                 
                 {% include "parciais/_carrinho.html" %}
 
-                {% comment %} <div class="table-responsive">
-                    <table class="table">
-
-                        <tr>
-                            <th class="d-none d-lg-block">Imagem</th>
-                            <th>Produto</th>
-                            <th>Tipo</th>
-                            <th>Quantidade</th>
-                            <th>Total</th>
-                        </tr>
-
-                        {% for produto in carrinho.values %}
-                            <tr>
-                                <td class="d-none d-lg-block">
-                                    <a href="{% url "produto:detail" produto.slug %}">
-                                        <img class="cart-img" src="{% get_media_prefix %}{{ produto.imagem }}">
-                                    </a>
-                                </td>
-                                
-                                <td>
-                                    <a href="{% url "produto:detail" produto.slug %}">
-                                        {{ produto.produto_nome }}
-                                    </a>
-                                    <a class="ml-3" href="{% url 'produto:remove' %}?vid={{ produto.variacao_id }}">
-                                        <i class="fas fa-times-circle text-danger" aria-hidden="true"></i>
-                                    </a>
-                                </td>
-                                <td>{{ produto.variacao_nome }}</td>
-                                <td>
-                                   {{ produto.quantidade }} x
-                                   {% if produto.preco_unitario_promocional %}
-                                       {{ produto.preco_unitario_promocional | formata_preco}}
-                                   {% else %}
-                                       {{ produto.preco_unitario | formata_preco }}
-                                   {% endif %}
-                                </td>
-                                {% if produto.preco_quantitativo_promocional %}
-                                    <td>{{ produto.preco_quantitativo_promocional | formata_preco}}</td>
-                                {% else %}
-                                    <td>{{ produto.preco_unitario_promocional | formata_preco }}</td>
-                                {% endif %}
-
-                            </tr>
-                        {% endfor %}
-                    </table>
-                </div> {% endcomment %}
-{% comment %}                 
-                <div class="table-responsive">
-                    <table class="table">
-
-                        <tr>
-                            <th class="d-none d-lg-block">Imagem</th>
-                            <th>Produto</th>
-                            <th>Tipo</th>
-                            <th>Quantidade</th>
-                            <th>Total</th>
-                        </tr>
-
-                        {% for produto in carrinho.values %}
-                            <tr>
-                                <td class="d-none d-lg-block">
-                                    <a href="{% url "produto:detail" produto.slug %}">
-                                        <img class="cart-img" src="{% get_media_prefix %}{{ produto.imagem }}">
-                                    </a>
-                                </td>
-                                
-                                <td>
-                                    <a href="{% url "produto:detail" produto.slug %}">
-                                        {{ produto.produto_nome }}
-                                    </a>
-                                    <a class="ml-3" href="{% url 'produto:remove' %}?vid={{ produto.variacao_id }}">
-                                        <i class="fas fa-times-circle text-danger" aria-hidden="true"></i>
-                                    </a>
-                                </td>
-                                <td>{{ produto.variacao_nome }}</td>
-                                <td>
-                                   {{ produto.quantidade }} x
-                                   {% if produto.preco_unitario_promocional %}
-                                       {{ produto.preco_unitario_promocional | formata_preco}}
-                                   {% else %}
-                                       {{ produto.preco_unitario | formata_preco }}
-                                   {% endif %}
-                                </td>
-                                {% if produto.preco_quantitativo_promocional %}
-                                    <td>{{ produto.preco_quantitativo_promocional | formata_preco}}</td>
-                                {% else %}
-                                    <td>{{ produto.preco_unitario_promocional | formata_preco }}</td>
-                                {% endif %}
-
-                            </tr>
-                        {% endfor %}
-                    </table>
-                </div> {% endcomment %}
-
-
-                {% comment %} {% include "parciais/_carrinho.html" %} {% endcomment %}
             </div>
         </div>
 
@@ -119,15 +23,22 @@
                     <table class="table">
                         <tr>
                             <td class="font-weight-bold">Total</td>
-                            <td>{{ request.session.carrinho|cart_total_valor }}</td>
+                            <td>{{ request.session.carrinho|cart_total_valor|formata_preco }}</td>
                         </tr>
                     </table>
                 </div>
             </div>
             <div class="col-lg mt-auto">
-                <a class="btn btn-lg btn-block btn-primary" href="#">
-                    Finalizar a compra
-                </a>
+                {% if request.user.is_authenticated %}
+                    <a class="btn btn-lg btn-block btn-primary" href="{% url 'produto:purchaseSummary' %}">
+                        Comprar
+                    </a>
+                {% else %}
+                    <a class="btn btn-lg btn-block btn-primary" href="{% url 'perfil:create' %}">
+                        Cadastrar no sistema
+                    </a>
+                {% endif %}
+
             </div>
         </div>
 

@@ -172,4 +172,19 @@ class RemoveFromCartView(View):
 
 class PurchaseSummaryView(View):
     def get(self, *args, **kwargs):
-        return HttpResponse('Método finalizar produto do app Produto')
+        if not self.request.user.is_authenticated:
+            print('Usuário não autenticado')
+            return redirect('perfil:create')
+
+        print('Usuário autenticado')
+
+        contexto = {
+            'usuario': self.request.user,
+            'carrinho': self.request.session['carrinho'],
+        }
+
+        return render(
+            self.request,
+            'produto/resumo.html',
+            contexto,
+        )
