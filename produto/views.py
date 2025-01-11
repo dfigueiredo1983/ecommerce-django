@@ -4,6 +4,7 @@ from django.views import View
 from django.http import HttpResponse
 from django.contrib import messages
 from . models import Produto, Variacao
+from perfil.models import Perfil
 
 from django.urls import reverse
 from django.http import HttpResponseRedirect
@@ -25,12 +26,6 @@ class DetailProductView(DetailView):
 class ToAddCartView(View):
     def get(self, *args, **kwargs):
         http_referer = self.request.META.get('HTTP_REFERER', reverse('produto:list'))
-
-        # if self.request.session['carrinho']:
-        #     print('Existe o carrinho na sessão')
-        #     self.request.session['carrinho'] = {}
-        #     # return HttpResponseRedirect(reverse('produto:list'))
-        #     return redirect('produto:list')
 
         variacao_id = self.request.GET.get('vid')
         if not variacao_id:
@@ -71,17 +66,11 @@ class ToAddCartView(View):
         
         carrinho = self.request.session['carrinho']
 
-        print(f'Carrinho: {carrinho}')
-
         if variacao_id in carrinho:
-            print('Já existe no carrinho')
             quantidade_carrinho = carrinho[variacao_id]['quantidade']
-            print(f'Antes. Quantidade no carrinho: {quantidade_carrinho}')
             quantidade_carrinho += 1
-            print(f'Depois. Quantidade no carrinho: {quantidade_carrinho}')
 
             if variacao_estoque < quantidade_carrinho:
-                print(f'Estoque insuficiente. Há apenas {variacao_estoque}.')
                 messages.warning(
                     self.request,
                     f'Estoque insuficiente. Temos apenas {variacao_estoque} disponíveis',
@@ -94,7 +83,6 @@ class ToAddCartView(View):
             carrinho[variacao_id]['preco_quantitativo_promocional'] = preco_unitario_promocional * \
                   quantidade_carrinho
         else:
-            print('Ainda não existe no carrinho')
             carrinho[variacao_id] = {
                 'produto_id': produto_id,
                 'produto_nome': produto_nome,
@@ -108,8 +96,6 @@ class ToAddCartView(View):
             }
         self.request.session.save()
 
-        print(f'Quantidade no carrinho: {self.request.session['carrinho']}')
-
         messages.success(
             self.request,
             f'Produto {produto_nome} {variacao_nome} adicionado' \
@@ -118,8 +104,6 @@ class ToAddCartView(View):
 
         return redirect(self.request.META.get('HTTP_REFERER', 'produto:list'))
         
-        # return HttpResponse('Adicionado ao carrinho de compras')
-
 
 class CartView(View):
     def get(self, *args, **kwargs):
@@ -137,13 +121,9 @@ class RemoveFromCartView(View):
         http_referer = self.request.META.get('HTTP_REFERER', reverse('produto:list'))
         variacao_id = self.request.GET.get('vid')
 
-        print(f'Variação para remover do carrinho: {variacao_id}')
+        # del self.request.session['carrinho']
 
         if not variacao_id:
-            # messages.error(
-            #     self.request,
-            #     'Produto não existe no carrinho.'
-            # )
             return redirect(http_referer)
         
         if not self.request.session.get('carrinho'):
@@ -153,34 +133,66 @@ class RemoveFromCartView(View):
             return redirect(http_referer)
 
         carrinho = self.request.session['carrinho'][variacao_id]
-        print(f'Carrinho antes de remover: {carrinho}')
+
         quantidade = carrinho['quantidade']
-        if quantidade > 1:
-            carrinho['quantidade'] = quantidade - 1
-        else:
+        print('Quantidade: ', quantidade)
+
+
+        print('Carrinho antes de remover: ', carrinho)
+
+        quantidade -= 1
+        carrinho['quantidade'] = quantidade
+        carrinho['preco_quantitativo'] = quantidade * \
+                        carrinho['preco_unitario']
+
+        carrinho['preco_quantitativo_promocional'] = quantidade * \
+                        carrinho['preco_unitario_promocional']
+
+        if quantidade == 0:
+            messages.success(
+                self.request,
+                f'{carrinho['produto_nome']} removido do carrinho.',
+            )
             del self.request.session['carrinho'][variacao_id]
-                
-        self.request.session.save()
-        print(f'Carrinho depois de remover: {carrinho}')
+        else:
+            messages.success(
+                self.request,
+                f'{carrinho['produto_nome']} com {quantidade} unidades no carrinho.',
+            )
+
         
-        messages.success(
-            self.request,
-            f'{carrinho['produto_nome']} removido do carrinho de compras',
-        )
+        self.request.session.save()
 
         return redirect(http_referer)
 
 class PurchaseSummaryView(View):
     def get(self, *args, **kwargs):
         if not self.request.user.is_authenticated:
-            print('Usuário não autenticado')
             return redirect('perfil:create')
 
-        print('Usuário autenticado')
+        perfil = Perfil.objects.filter(usuario=self.request.user).exists()
+
+        if not perfil:
+            messages.error(
+                self.request,
+                'Usuário cadastrado mas ainda não tem perfil no sistema. '
+                'Favor preencher os dados do formulário.'
+            )
+            return redirect('perfil:create')
+
+        if not self.request.session.get('carrinho'):
+            messages.error(
+                self.request,
+                'Usuário não tem itens no carrinho de compras.'
+            )
+            return redirect('produto:list')
+
+        carrinho = self.request.session['carrinho']
+        print('Carrinho Puschase: ', carrinho)
 
         contexto = {
             'usuario': self.request.user,
-            'carrinho': self.request.session['carrinho'],
+            'carrinho': carrinho,
         }
 
         return render(

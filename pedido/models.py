@@ -13,6 +13,7 @@ class Pedido(models.Model):
     # pedido é filho de usuário - então se deletar o usuário eu quero que o pedido também seja deletado
     user: models.ForeignKey = models.ForeignKey(User, on_delete=models.CASCADE)
     total: models.FloatField = models.FloatField(default=0)
+    qtde_total: models.PositiveBigIntegerField = models.PositiveBigIntegerField(default=0)
     status: models.CharField = models.CharField(
         default='C',
         max_length=1,

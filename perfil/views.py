@@ -116,7 +116,6 @@ class CreatePerfilView(BasePerfil):
             if autentica:
                 login(self.request, user=usuario)
 
-        # Caso seja criada uma nova seção por causa da troca de senha do usuário
         self.request.session['carrinho'] = self.carrinho
         self.request.session.save()
 
@@ -126,7 +125,6 @@ class CreatePerfilView(BasePerfil):
         )
 
         return redirect('produto:cart')
-        # return redirect('perfil:create')
 
 class UpdatePerfilView(View):
     def get(self, *args, **kwargs):

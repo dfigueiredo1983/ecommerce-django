@@ -43,7 +43,8 @@
                 {% if produto.preco_quantitativo_promocional %}
                     <td>{{ produto.preco_quantitativo_promocional | formata_preco }}</td>
                 {% else %}
-                    <td>{{ produto.preco_unitario_promocional | formata_preco }}</td>
+                    {% comment %} <td>{{ produto.preco_quantitativo | formata_preco }}</td> {% endcomment %}
+                    <td>{{ produto.preco_quantitativo }}</td>
                 {% endif %}
             </tr>
         {% endfor %}
