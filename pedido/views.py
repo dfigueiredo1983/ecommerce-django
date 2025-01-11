@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect
-from django.views.generic import ListView
+from django.urls import reverse
+from django.views.generic import ListView, DetailView
 from django.views import View
 from django.http import HttpResponse
 from django.contrib import messages
@@ -9,10 +10,24 @@ from .models import Pedido, ItemPedido
 
 from utils import utils
 
-# Create your views here.
-class PayOrderView(View):
-    def get(self, *args, **kwargs):
-        return HttpResponse('Fechar pedido')
+class DispatchLoginRequired(View):
+    def dispatch(self, request, *args, **kwargs):
+
+        if not self.request.user.is_authenticated:
+            return redirect('perfil:create')
+
+        return super().dispatch(request, *args, **kwargs)
+
+class PayOrderView(DispatchLoginRequired, DetailView):
+    template_name = 'pedido/pagar.html'
+    model = Pedido
+    pk_url_kwarg = 'pk'
+    context_object_name = 'pedido'
+
+    def get_queryset(self, *args, **kwargs):
+        qs = super().get_queryset(*args, **kwargs)
+        qs = qs.filter(user=self.request.user)
+        return qs
 
 class SaveOrderView(View):
     template_name = 'pedido/pagar.html'
@@ -62,10 +77,6 @@ class SaveOrderView(View):
                 error_msg_estoque = 'Estoque insuficiente para alguns itens. ' \
                     'Ajustamos o seu pedido conforme as quantidades ' \
                     'disponíveis em nosso estoque.'
-            else:
-                carrinho[vid]['preco_quantitativo'] = qtde_carrinho * preco_unitario
-                carrinho[vid]['preco_quantitativo_promocional'] = qtde_carrinho * \
-                                                    preco_promocional
 
             if error_msg_estoque:
                 messages.error(
@@ -79,12 +90,16 @@ class SaveOrderView(View):
         qtde_total_carrinho = utils.cart_total_qtde(carrinho)
         valor_total_carrinho = utils.cart_total_valor(carrinho)
 
+        print('Valor total carrinho: ', valor_total_carrinho)
+
         pedido = Pedido(
             user = self.request.user,
             total = valor_total_carrinho,
             qtde_total = qtde_total_carrinho,
             status='C',
         )
+
+        print('Valor total pedido: ', pedido.total)
 
         pedido.save()
 
@@ -104,22 +119,16 @@ class SaveOrderView(View):
             ]
         )
 
-        contexto = {
-            'qtde_total_carrinho': qtde_total_carrinho,
-            'valor_total_carrinho': valor_total_carrinho,
-        }
-
-        renderiza = render(
-            self.request,
-            self.template_name,
-            contexto,
-        )
-
         del self.request.session['carrinho']
         
-        return redirect('pedido:listOrder')
-
-        return renderiza
+        return redirect(
+            reverse(
+                'pedido:payOrder',
+                kwargs={
+                    'pk': pedido.pk,
+                }
+            )
+        )
 
 class ListOrderView(View):
     def get(self, *args, **kwargs):

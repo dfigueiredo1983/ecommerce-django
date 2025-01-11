@@ -24,6 +24,7 @@
                         <tr>
                             <td class="font-weight-bold">Total</td>
                             <td>{{ request.session.carrinho|cart_total_valor|formata_preco }}</td>
+                            {% comment %} <td>{{ request.session.carrinho }}</td> {% endcomment %}
                         </tr>
                     </table>
                 </div>

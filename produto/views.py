@@ -91,6 +91,8 @@ class ToAddCartView(View):
                 'preco_unitario': preco_unitario,
                 'preco_unitario_promocional': preco_unitario_promocional,
                 'quantidade': quantidade,
+                'preco_quantitativo': preco_unitario,
+                'preco_quantitativo_promocional': preco_unitario_promocional,
                 'slug': slug,
                 'imagem': imagem,
             }
